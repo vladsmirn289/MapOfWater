@@ -5,23 +5,19 @@ import java.util.stream.Collectors;
 
 public class Task2 {
     private int[][] blockHeights;
-
-    private enum Direction {
-        NORTH,
-        SOUTH,
-        WEST,
-        EAST,
-        NONE
-    }
+    private int width;
+    private int length;
+    private RiverChecker riverChecker;
 
     public Task2(int[][] blockHeights) {
         this.blockHeights = blockHeights;
+        this.width = blockHeights.length;
+        this.length = blockHeights[0].length;
+        this.riverChecker = new RiverChecker(blockHeights);
     }
 
     public int[][] waterHeightsByBlocks() {
-        int width = blockHeights.length;
-        int length = blockHeights[0].length;
-        int[][] waterHeights = new int[blockHeights.length][blockHeights[0].length];
+        int[][] waterHeights = new int[width][length];
         int[][] oldBlockHeights;
 
         do {
@@ -31,33 +27,40 @@ public class Task2 {
             for (int x = 1; x < width - 1; ++x) {
                 for (int y = 1; y < length - 1; ++y) {
                     int currentHeight = blockHeights[x][y];
-                    List<Integer> listOfBlockHeights = listOfAroundBlockHeights(x, y);
+                    List<Integer> listOfAroundBlockHeights = getAroundBlockHeights(new Coordinate(x, y));
 
-                    int firstMin = listOfBlockHeights.get(0);
+                    int firstMin = listOfAroundBlockHeights.get(0);
                     int secondMin;
-                    if (listOfBlockHeights.size() > 1) {
-                        secondMin = listOfBlockHeights.get(1);
+                    if (listOfAroundBlockHeights.size() > 1) {
+                        secondMin = listOfAroundBlockHeights.get(1);
                     } else {
                         secondMin = firstMin;
                     }
 
-                    if (currentHeight == 0 || listOfBlockHeights.get(0) == 0) {
+                    boolean isHole = currentHeight == 0 || firstMin == 0;
+                    boolean isFlatland = currentHeight == firstMin;
+                    boolean isPeak = currentHeight > firstMin;
+                    if (isHole) {
                         waterHeights[x][y] += 0;
-                    } else if (currentHeight == firstMin) {
-                        if (!isPartOfLake(x, y, Direction.NONE)) {
+                    } else if (isFlatland) {
+                        //A river is a state when the flatland contains a way to the outer border. This leads water is falls down.
+                        boolean isRiver = riverChecker.isPartOfRiver(new Coordinate(x, y), Direction.NONE);
+                        if (isRiver) {
                             waterHeights[x][y] += 0;
                         } else {
                             newHeight = secondMin - currentHeight + blockHeights[x][y];
                             waterHeights[x][y] = newHeight;
                             blockHeights[x][y] = newHeight;
                         }
-                    } else if (currentHeight > firstMin) {
+                    } else if (isPeak) {
                         waterHeights[x][y] += 0;
                     } else {
                         newHeight = firstMin - currentHeight + blockHeights[x][y];
                         waterHeights[x][y] = newHeight;
                         blockHeights[x][y] = newHeight;
                     }
+
+                    riverChecker.resetCounter();
                 }
             }
         } while (!isMapsEquals(oldBlockHeights, blockHeights));
@@ -65,13 +68,16 @@ public class Task2 {
         return waterHeights;
     }
 
-    private List<Integer> listOfAroundBlockHeights(int x, int y) {
+    private List<Integer> getAroundBlockHeights(Coordinate coordinate) {
         /*
                     n = north
                     s = south
                     w = west
                     e = east
         */
+        int x = coordinate.getX();
+        int y = coordinate.getY();
+
         int n = blockHeights[x-1][y];
         int e = blockHeights[x][y+1];
         int s = blockHeights[x+1][y];
@@ -81,44 +87,6 @@ public class Task2 {
         return aroundBlockHeights.stream()
                 .distinct().sorted()
                 .collect(Collectors.toList());
-    }
-
-    private boolean isPartOfLake(int x, int y, Direction from) {
-        if (x == 0 || y == 0 || x == blockHeights.length-1 || y == blockHeights[0].length-1) {
-            return false;
-        }
-
-        int n = blockHeights[x-1][y];
-        int e = blockHeights[x][y+1];
-        int s = blockHeights[x+1][y];
-        int w = blockHeights[x][y-1];
-        int currentHeight = blockHeights[x][y];
-
-        if (n <= currentHeight && !from.equals(Direction.NORTH)) {
-            if (!isPartOfLake(x - 1, y, Direction.SOUTH)) {
-                return false;
-            }
-        }
-
-        if (e <= currentHeight && !from.equals(Direction.EAST)) {
-            if (!isPartOfLake(x, y + 1, Direction.WEST)) {
-                return false;
-            }
-        }
-
-        if (s <= currentHeight && !from.equals(Direction.SOUTH)) {
-            if (!isPartOfLake(x + 1, y, Direction.NORTH)) {
-                return false;
-            }
-        }
-
-        if (w <= currentHeight && !from.equals(Direction.WEST)) {
-            if (!isPartOfLake(x, y - 1, Direction.EAST)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private int[][] deepCopy(int[][] array) {
@@ -155,6 +123,9 @@ public class Task2 {
 
     public void setBlockHeights(int[][] blockHeights) {
         this.blockHeights = blockHeights;
+        this.width = blockHeights.length;
+        this.length = blockHeights[0].length;
+        this.riverChecker.setBlockHeights(blockHeights);
     }
 
     public static void main(String[] args) {

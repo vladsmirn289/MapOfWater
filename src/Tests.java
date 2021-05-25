@@ -115,6 +115,26 @@ public class Tests {
         task2.setBlockHeights(blockHeights);
         waterMap = task2.waterHeightsByBlocks();
         printArray(waterMap);
+
+        /* tenth output
+            5, 5, 5, 5, 5, 5, 5,
+            5, 1, 1, 1, 1, 1, 5,
+            5, 1, 3, 3, 3, 1, 5,
+            5, 1, 3, 1, 3, 1, 5,
+            5, 1, 3, 3, 3, 1, 5,
+            5, 1, 1, 1, 1, 1, 5,
+            5, 5, 5, 5, 5, 5, 5
+        */
+        blockHeights = new int[][] { {5, 5, 5, 5, 5, 5, 5},
+                                     {5, 1, 1, 1, 1, 1, 5},
+                                     {5, 1, 3, 3, 3, 1, 5},
+                                     {5, 1, 3, 1, 3, 1, 5},
+                                     {5, 1, 3, 3, 3, 1, 5},
+                                     {5, 1, 1, 1, 1, 1, 5},
+                                     {5, 5, 5, 5, 5, 5, 5} };
+        task2.setBlockHeights(blockHeights);
+        waterMap = task2.waterHeightsByBlocks();
+        printArray(waterMap);
     }
 
     public static void printArray(int[][] array) {
